@@ -1,3 +1,7 @@
+# Housing Data Analysis
+Regression analysis of Boston housing prices
+Dataset :Boston Housing Data Set
+
 ## Overview:
 The main aim of this project is to find the best linear regression model to estimate the median value (in $1000's) of owner-occupied homes in the Suburbs of Boston. The performance of the solution is a key factor since the accuracy of the prediction is desired.
 
