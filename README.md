@@ -3,20 +3,14 @@ Regression analysis of Boston housing prices
 Dataset :Boston Housing Data Set
 
 ## Overview:
-The main aim of this project is to find the best linear regression model to estimate the median value (in $1000's) of owner-occupied homes in the Suburbs of Boston. The performance of the solution is a key factor since the accuracy of the prediction is desired.
+The main aim of this project is to find the best regression model to estimate the median value homes in the Suburbs of Boston. 
 
-The data used in this project is available at the UCI Machine Learning Repository. This modeling problem is referenced in the 2014 version of the book "An Introduction to Statistical Learning" by Gareth Games, Daniela Witten, Trevor Hastie, and Robert Tibshinari.
+The data used in this project is available at the UCI Machine Learning Repository. 
   
 ##Approach:
-### Packages Required:
-
 ### Data Preprocessing:
  * Managing missing data
- 
  * Correlation Analysis
  
-### Computing
-
-Usage:
-
-Will be updated after completion of the project
+### Future work
+Currently, working on extending this project to enhance the Random Forest model to manage the number of trees for best optimum result and to address multicollinearity problems.
