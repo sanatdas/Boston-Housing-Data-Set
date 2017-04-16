@@ -1,0 +1,192 @@
+House Price Prediction
+=========================================
+
+```{r setup,include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Overview
+
+This project aims are finding a statistical model to estimate the median value of a house in Boston area given property related paraments.To achieve the accuracy of prediction accuracy, the model performances are verified and compared. 
+
+The data for this project is taken from UCI Machine Learning Repository.
+
+The project covers the following sections:   
+
+(1) Data Processing :  
+This section covers the process for data downloading, exploring the data, correlation analysis to find out variable with strong correlation with median house price variable "Medv" and selecting the required attributes for processing.  
+(2) Model Builing and Comparison:  
+For this project, the following statistical methods are used for predicting the median price of the house:
+  * Linear Gression
+  * Lasso Regression
+  * Random Forest
+  The performance of the models are verifies using RMSE value
+(3) Conclusion:  
+This section includes the results of the analysis.
+After completing the analysis, it was found that Randowm Forest gives a better result than linear regression and lasso regression.
+
+## Data Processing
+
+### Loading Required packages and Libraries
+
+```{r, results='hide'}
+install.packages("corrplot", repos = "http://cran.us.r-project.org")
+install.packages("car", repos = "http://cran.us.r-project.org")  
+install.packages("Metrics", repos = "http://cran.us.r-project.org")  
+install.packages("randomForest", repos = "http://cran.us.r-project.org")  
+install.packages("lars", repos = "http://cran.us.r-project.org")   
+install.packages("ggplot2", repos = "http://cran.us.r-project.org") 
+```
+
+```{r, message=FALSE}
+library(corrplot)  
+library(car)   
+library(Metrics)  
+library(randomForest)  
+library(lars)   
+library(ggplot2) 
+```
+
+### Loading Data
+```{r}
+urlfile <-'https://archive.ics.uci.edu/ml/machine-learning-databases/housing/housing.data'
+
+if(!exists("boston.data")){
+        boston.data = read.table(urlfile)
+}
+#### Rename the columns to meaningful names
+names(boston.data) <- c("crim","zn","indus","chas","nox","rm","age","dis","rad","tax","ptratio","black","lstat","medv")
+head(boston.data)
+```
+
+### Exploratory Data Analysis 
+```{r}
+dim(boston.data)
+```
+The dataset has 506 observations and 14 column attributes
+
+```{r}
+str(boston.data)
+```
+
+#### Checking for null values
+```{r}
+mean(is.na(boston.data))
+```
+
+#### Corrrelation analysis to check how the variables are related to each other
+
+```{r}
+correlations<- cor(boston.data[,-1],use="everything")
+corrplot(correlations, method="number", type="lower",  sig.level = 0.01, insig = "blank")
+```
+
+The response variable being variable "medv", we can infer from the above that variables rm, ptratio, and lstat and most relevant in estimating the value of "medv", which represents the median value of the house price.
+
+#### Plotting the correlation between variables
+```{r}
+pairs(~medv + rm +ptratio+lstat,data=boston.data,main="Scatterplot Matrix")
+```
+
+#### Spliting Data into train dataset and test dataset (70% Training data; 30% Test data)
+```{r}
+subset <- sample(nrow(boston.data), nrow(boston.data) * 0.7)
+boston.train = boston.data[subset, ]
+boston.test = boston.data[-subset, ]
+```
+
+## Model Building and Comparision
+
+### Model1 : Linear Regression
+The linear regression model is built, the multicollinearity is checked and relevant variable if any is removed, the 
+#building first linear regression model with train data with all the variables
+```{r}
+LR_model1 <- lm(medv ~ . , data=boston.train) 
+summary(LR_model1) 
+```
+
+#### Checking collinearity of model1
+```{r}
+vif(LR_model1)
+```
+
+Looking at VIF(variance inflation factor) values from the model, the variable "tax"" having highest VIF value at 9.365086, it is removed.
+
+#### Removing the variable "tax" with highest collinearity from the model
+```{r}
+LR_model2 <- lm(medv ~ . -tax, data=boston.train)
+summary(LR_model2)
+```
+
+#### Removing variables that are not statistically significant:
+Based on high p-value, the variables age, indus are also removed from the  model
+```{r}
+LR_model <-  lm(formula=medv ~ . -tax-age-indus,data=boston.train)
+
+```
+
+#### Diagnosis of residuals
+```{r}
+layout(matrix(c(1,2,3,4), 2, 2, byrow = TRUE))
+plot(LR_model)
+par(mfrow=c(1,1))
+```
+
+#### Checking the performance of linear regression model with RMSE value.
+```{r}
+Prediction_1<- predict(LR_model, newdata= boston.test)
+lr_rmse <- rmse(log(boston.test$medv),log(Prediction_1)) 
+```
+
+```{r , results='asis', echo=FALSE}
+cat(paste("* RMSE value for Linear Regression : ", lr_rmse, sep="", collapse="\n\n"))
+
+```
+
+### Model2 : Lasso Regression
+```{r}
+Ind_Var<- as.matrix(boston.train[,1:13])
+Dep_Var<- as.matrix(boston.train[,14])
+Las_model<- lars(Ind_Var,Dep_Var,type = 'lasso')
+plot(Las_model)
+```
+
+#### Addressing multicollinearity of the model
+```{r}
+best_step<- Las_model$df[which.min(Las_model$Cp)]
+Prediction_2<- predict.lars(Las_model,newx =as.matrix(boston.test[,1:13]), s=best_step, type= "fit")
+```
+
+#### Checking the performance of the model with RMSE value
+```{r}
+las_rmse <- rmse(log(boston.test$medv),log(Prediction_2$fit))
+```
+
+```{r , results='asis', echo=FALSE}
+cat(paste("* RMSE value for Lasso Regression : ", las_rmse, sep="", collapse="\n\n"))
+
+```
+
+### Model3 : Random Forest
+```{r}
+RF_model <- randomForest(medv~.,data= boston.train)
+Prediction_3 <- predict(RF_model, newdata=boston.test)
+```
+
+#### Check the performance of Random Forest model with RMSE value
+```{r}
+rf_rmse<-rmse(log(boston.test$medv),log(Prediction_3)) 
+```
+
+```{r , results='asis', echo=FALSE}
+cat(paste("* RMSE value for Lasso Regression : ", rf_rmse, sep="", collapse="\n\n"))
+
+```
+
+
+## Conclusion
+Considering the above machine learning models, the random forest regression model is better for estimating the median value of the housing price.  
+
+Future Work:
+As next step, I am working on:
+To Explore more details on Random Forest regression looking into multicollinearity and number of trees
